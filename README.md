@@ -84,11 +84,13 @@ This image comes with Node.js and NPM already installed so the next thing we nee
 # Install app dependencies
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
-COPY package*.json ./
+_COPY package*.json ./
 
-RUN npm install
+RUN npm install_
+
 # If you are building your code for production
 # RUN npm install --only=production
+
 Note that, rather than copying the entire working directory, we are only copying the package.json file. This allows us to take advantage of cached Docker layers. bitJudo has a good explanation of this here.
 
 To bundle your app's source code inside the Docker image, use the COPY instruction:
@@ -159,18 +161,21 @@ If you need to go inside the container you can use the exec command:
 
 # Enter the container
 $ docker exec -it <container id> /bin/bash
-Test
-To test your app, get the port of your app that Docker mapped:
 
+## Test
+To test your app, get the port of your app that Docker mapped:
+```
 $ docker ps
 
 # Example
 ID            IMAGE                                COMMAND    ...   PORTS
 ecce33b30ebf  <your username>/node-web-app:latest  npm start  ...   49160->8080
+```
+
 In the example above, Docker mapped the 8080 port inside of the container to the port 49160 on your machine.
 
 Now you can call your app using curl (install if needed via: sudo apt-get install curl):
-
+```
 $ curl -i localhost:49160
 
 HTTP/1.1 200 OK
@@ -182,12 +187,14 @@ Date: Mon, 13 Nov 2017 20:53:59 GMT
 Connection: keep-alive
 
 Hello world
+```
+
 We hope this tutorial helped you get up and running a simple Node.js application on Docker.
 
 You can find more information about Docker and Node.js on Docker in the following places:
-
-Official Node.js Docker Image
-Node.js Docker Best Practices Guide
-Official Docker documentation
-Docker Tag on Stack Overflow
-Docker Subreddit
+- [](https://nodejs.org/en/docs/guides/nodejs-docker-webapp/)
+- [Official Node.js Docker Image](https://hub.docker.com/_/node/)
+- [Node.js Docker Best Practices Guide](https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md)
+- [Official Docker documentation](https://docs.docker.com/)
+- [Docker Tag on Stack Overflow](https://stackoverflow.com/questions/tagged/docker)
+- [Docker Subreddit]()
