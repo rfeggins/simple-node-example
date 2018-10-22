@@ -19,4 +19,6 @@ console.log(`Running on http://${HOST}:${PORT}`);
 
 if (process.pid) {
    console.log('This process is your pid ' + process.pid);
+} else {
+   console.log('Couldn\'t determine pid');
 }
