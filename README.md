@@ -19,7 +19,7 @@ Docker allows you to package an application with all of its dependencies into a 
 
 ## Create the Node.js app
 First, create a new directory where all the files would live. In this directory create a package.json file that describes your app and its dependencies:
-'''
+```
 {
   "name": "docker_web_app",
   "version": "1.0.0",
@@ -33,11 +33,13 @@ First, create a new directory where all the files would live. In this directory 
     "express": "^4.16.1"
   }
 }
-'''
+```
+
 With your new package.json file, run npm install. If you are using npm version 5 or later, this will generate a package-lock.json file which will be copied to your Docker image.
 
 Then, create a server.js file that defines a web app using the Express.js framework:
 
+```
 'use strict';
 
 const express = require('express');
@@ -54,21 +56,29 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
+```
+
+# Docker
 In the next steps, we'll look at how you can run this app inside a Docker container using the official Docker image. First, you'll need to build a Docker image of your app.
 
-Creating a Dockerfile
-Create an empty file called Dockerfile:
+## Creating a Dockerfile
+1. Create an empty file called Dockerfile:
 
-touch Dockerfile
-Open the Dockerfile in your favorite text editor
+```
+$ touch Dockerfile
+```
+
+2. Edit the Dockerfile using your favorite text editor
 
 The first thing we need to do is define from what image we want to build from. Here we will use the latest LTS (long term support) version 8 of node available from the Docker Hub:
 
-FROM node:8
+*FROM node:8*
 Next we create a directory to hold the application code inside the image, this will be the working directory for your application:
 
 # Create app directory
-WORKDIR /usr/src/app
+*WORKDIR /usr/src/app*
+
+
 This image comes with Node.js and NPM already installed so the next thing we need to do is to install your app dependencies using the npm binary. Please note that if you are using npm version 4 or earlier a package-lock.json file will not be generated.
 
 # Install app dependencies
