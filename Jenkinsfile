@@ -1,16 +1,30 @@
 pipeline {
   agent any
 
-  // this tools stages verifies that node has been installed
-
-  tools {nodejs "node"}
-
-  stages {
-     stage('Pre-buid') {
-        steps {
-          sh 'npm config ls'
-        }
-     }
+  tools {
+      maven 'm3'
   }
 
+  parameters {
+      string(name: 'Version',
+      defaultValue: '1.0.0',
+      description:  'This is a new parameter')
+  }
+
+  stages {
+    stage (‘Checkout’)
+    {
+      steps {
+          checkout scm
+      }
+    }
+    stage (‘Test’) {
+        steps {
+          env.NODE_ENV = “test”
+          print “Environment will be : ${env.NODE_ENV}”
+          sh ‘node -v’
+          sh ‘npm install’
+        }
+    }
+  }
 }
