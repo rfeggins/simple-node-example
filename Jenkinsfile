@@ -1,10 +1,6 @@
 pipeline {
   agent any
 
-  tools {
-      maven 'm3'
-  }
-
   parameters {
       string(name: 'Version',
       defaultValue: '1.0.0',
@@ -12,19 +8,23 @@ pipeline {
   }
 
   stages {
-    stage (‘Checkout’)
-    {
+    stage (‘Checkout’) {
       steps {
-          checkout scm
-      }
+        checkout scm
+      } //End Checkout
     }
     stage (‘Test’) {
-        steps {
-          env.NODE_ENV = “test”
-          print “Environment will be : ${env.NODE_ENV}”
-          sh ‘node -v’
-          sh ‘npm install’
-        }
-    }
-  }
-}
+      steps {
+        script {
+            sh '''
+             node -v
+             echo env
+             npm install
+            '''
+        } //END Script section
+      } // END Steps secton
+    } // End Build Stage
+
+  } //END STAGES Section
+
+} //END PIPELINE
