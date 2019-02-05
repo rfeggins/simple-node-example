@@ -1,0 +1,145 @@
+pipeline{
+  agent any
+  
+  environment{
+    PATHX = "${env.WORKSPACE}:${env.PATH}"
+    PATH = "/mnt/JENKINS_HOME/tools/hudson.model.JDK/JDK_8/bin:/sbin:/usr/sbin:/bin:/usr/bin:/home/jenkins/.local/bin:/home/jenkins/bin"
+
+    // Variables required for Jira Integration
+    jiraSite = "Hertz-Jira"  // Hertz site
+    gitCommitMsg = ""
+    String ddtl_ID = ""
+
+    //initializing a local variable
+    to_do = 'status/11300'
+    in_progress = 'status/11408'
+    dev_complete = 'status/11419'
+    ready_to_deploy = 'status/6'
+
+  }
+  
+  stages {
+
+   stage('Checkout') {
+       steps {
+           checkout([$class: 'GitSCM', branches: [[name: '${sha1}']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'hertz_dt_wr', name: 'origin', refspec: '+refs/pull/*:refs/remotes/origin/pr/*', url: 'git@github.c2c.us-south.bluemix.net:Hertz-DT/C2C_Digital_Android.git']]])
+      }
+    }
+
+    stage('Check Jira') {
+     steps {
+       script {
+        // ##################################################
+        // get ddtl from commit Message
+        sh '''
+          env
+        '''
+        gitCommitMsg = sh(returnStdout: true, script: 'git log --oneline -1 ${GIT_COMMIT}' )
+        ddtl_ID = sh(returnStdout: true, script: 'git log --oneline -1 ${GIT_COMMIT} | grep -i -o ddtl-.... | tr -d "\n" ')
+
+        echo "Commit Message:  ${gitCommitMsg}"
+        echo "Jira Issues found in Git Commit Msg:  ${ddtl_ID}"
+
+        // validate that ddtl number is found within Git gitCommitMsg message
+        if (ddtl_ID != "") {
+
+          echo "Following DDTL IDs retrieved from git commit message"
+          echo ddtl_ID
+          FoundDDTL = true  // set value to TRUE
+
+          try {
+            def issue = jiraGetIssue idOrKey: ddtl_ID, site: jiraSite
+            //issue["fields"]["status"]["name"]
+
+          } catch (MissingPropertyException ab ){
+            echo "Caught GROOVY EXCEPTION MissingPropertyException"
+            echo "Invalid DDTL ID entered"
+
+          } catch (groovy.lang.MissingPropertyException aaa) {
+            echo "Caught GROOVY EXCEPTION  groovy.lang.MissingPropertyException"
+            echo "Failed to find jira Ticket  ${ddtl_ID}"
+
+          } catch (hudson.AbortException ae) {
+            // this ambiguous condition means during a shell step, user probably aborted
+            echo "Caught GROOVY EXCEPTION  hudson.AbortException"
+            echo "Failed to find jira Ticket  ${ddtl_ID}"
+
+            if (ae.getMessage().contains('Error Code: 404')) {
+                    echo "HUDSON EXCEPTION: Error Code: 404"
+            }
+            currentBuild.result = 'FAILURE'
+
+          } catch (Exception ex) {
+          echo "Caught GROOVY EXCEPTION  Exception"
+          echo "Failed to find jira Ticket  ${ddtl_ID}"
+
+            if ( issue.successful.toString() ) {  //true
+              echo "Issue ${ddtl_ID} Exists"
+            } else {
+              echo "Issue ${ddtl_ID} DOESNT EXIST"
+            }
+            error "Script Error trying to get Comments"
+          } // END TRY BLOCK
+
+       } else {
+
+          def errorMSG2 = "**ERROR** Please enter valid JIRA ticket number in the required format: "
+          echo "########################## \n ${errorMSG2} \n Example:      DDTL-1234: (comments) \n ##########################"
+          echo "Stopping build early…...."
+          currentBuild.result = 'ABORTED'
+          error('Stopping build early…')
+
+       } // END of IF
+
+      } // END SCRIPT
+    } //END STEPS
+    } // END JIRA INTEGRATION Stage
+
+    stage('build'){
+	  steps {
+	    timestamps {
+		  sh '''
+		    echo $PATHX
+			pwd
+			cp /mnt/JENKINS_HOME/secrets/fabric.properties ./app
+			cp /mnt/JENKINS_HOME/secrets/google-services.json ./app
+			source /home/jenkins/.bash_profile
+			chmod +x gradlew
+			./gradlew clean assembleHertzDev task runProgram '-Pversiontrv='DEV '-Pbuildno='$BUILD_NUMBER
+		  '''
+		}
+	  }
+	}
+    stage("Smoke Tests"){
+	  steps {
+	    timestamps {
+		  sh '''
+		    echo Run Smoke Tests
+		  '''
+		}
+	  }
+	}
+  }
+  post{
+    /*
+	success {
+	  timestamps {
+		slackSend channel: '#hertz-dt-andr-guest',
+		color: 'good',
+		message: "SUCCESSFUL: Job '\${env.JOB_NAME} [\${env.BUILD_NUMBER}]' (\${env.BUILD_URL})",
+		baseUrl: 'https://hooks.slack.com/services/T18EL2249/',
+		token: 'BCE6FLSM6/bdksc8dN3kQMWMpNmqFX4RL6'
+	  }
+	}
+	*/
+	failure {
+	  timestamps {
+	    slackSend channel: '#hertz-dt-andr-guest',
+		color: 'good',
+		message: "FAILED: Job '\${env.JOB_NAME} [\${env.BUILD_NUMBER}]' (\${env.BUILD_URL})",
+		baseUrl: 'https://hooks.slack.com/services/T18EL2249/',
+		token: 'BCE6FLSM6/bdksc8dN3kQMWMpNmqFX4RL6'
+	  }
+	}
+  }
+}
