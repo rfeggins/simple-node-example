@@ -8,8 +8,8 @@ Node.js application is structured.
 
 This guide has been separated into three (3) sections
  1. Create a simple web application in Node.js
- 2.
- 3.
+ 2. New Application
+ 3. Web Ex
 
 # Create a simple web application in Node.js
 In the first part of this guide we will create a simple web application in Node.js, then we will build a Docker image for that application, and lastly we will run the image as a container.
